@@ -1,4 +1,4 @@
-name: Check CRS Updates
+name: CRS Update (Manual)
 
 on:
   workflow_dispatch:
@@ -7,8 +7,6 @@ on:
         description: 'Set to true to force issue creation even if versions match'
         required: false
         default: 'false'
-  schedule:
-    - cron: '0 6 * * 1'
 
 jobs:
   check:
@@ -16,6 +14,8 @@ jobs:
     permissions:
       issues: write
       contents: read
+    env:
+      FORCE_ISSUE: ${{ github.event.inputs.force_issue || 'false' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,7 +23,8 @@ jobs:
         id: versions
         run: |
           set -euo pipefail
-          latest=$(curl -fsSL https://api.github.com/repos/coreruleset/coreruleset/releases/latest | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"].lstrip("v"))')
+          latest=$(curl -fsSL https://api.github.com/repos/coreruleset/coreruleset/releases/latest \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"].lstrip("v"))')
           if [[ -z "$latest" ]]; then
             echo "latest=" >> "$GITHUB_OUTPUT"
             echo "needs_issue=false" >> "$GITHUB_OUTPUT"
@@ -32,16 +33,7 @@ jobs:
           current=$(grep -oE 'update_crs_inplace.sh --version [0-9]+\.[0-9]+\.[0-9]+' README.md | head -n1 | awk '{print $3}' || true)
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
           echo "current=$current" >> "$GITHUB_OUTPUT"
-          force=$(python3 - <<'PY'
-import json
-import os
-
-with open(os.environ['GITHUB_EVENT_PATH']) as fh:
-    event = json.load(fh)
-
-print(event.get('inputs', {}).get('force_issue', 'false'))
-PY
-)
+          force="$FORCE_ISSUE"
           if [[ -z "$current" ]]; then
             echo "needs_issue=true" >> "$GITHUB_OUTPUT"
           elif [[ "$latest" != "$current" ]]; then
@@ -60,7 +52,7 @@ Current README example references **$current**.
 - Action: update README/PROGRESS and run \
   `update_crs_inplace.sh --version $latest ...` for validation.
 
-_This issue was created automatically by the scheduled Check CRS Updates workflow._
+_This issue was created automatically by the CRS Update workflow._
 ISSUE
           fi
       - name: Open issue for new release

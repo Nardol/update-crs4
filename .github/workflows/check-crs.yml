@@ -7,11 +7,15 @@ on:
         description: 'Set to true to force issue creation even if versions match'
         required: false
         default: 'false'
+  push:
+    paths:
+      - '.github/workflows/check-crs.yml'
   schedule:
     - cron: '0 6 * * 1'
 
 jobs:
   check:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     permissions:
       issues: write

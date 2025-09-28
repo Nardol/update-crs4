@@ -14,6 +14,12 @@ on:
     - cron: '0 6 * * 1'
 
 jobs:
+  noop:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip push execution
+        run: echo "Push trigger only updates workflow file."
   check:
     if: github.event_name != 'push'
     runs-on: ubuntu-latest

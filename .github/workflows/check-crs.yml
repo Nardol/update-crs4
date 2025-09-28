@@ -1,7 +1,12 @@
 name: Check CRS Updates
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_issue:
+        description: 'Set to true to force issue creation even if versions match'
+        required: false
+        default: 'false'
   schedule:
     - cron: '0 6 * * 1'
 
@@ -27,14 +32,17 @@ jobs:
           current=$(grep -oE 'update_crs_inplace.sh --version [0-9]+\.[0-9]+\.[0-9]+' README.md | head -n1 | awk '{print $3}' || true)
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
           echo "current=$current" >> "$GITHUB_OUTPUT"
+          force="${{ github.event.inputs.force_issue }}"
           if [[ -z "$current" ]]; then
             echo "needs_issue=true" >> "$GITHUB_OUTPUT"
           elif [[ "$latest" != "$current" ]]; then
             echo "needs_issue=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$force" == "true" ]]; then
+            echo "needs_issue=true" >> "$GITHUB_OUTPUT"
           else
             echo "needs_issue=false" >> "$GITHUB_OUTPUT"
           fi
-          if [[ "$latest" != "$current" ]]; then
+          if [[ "$latest" != "$current" || "$force" == "true" ]]; then
             cat <<ISSUE > update-notice.md
 A newer CRS release **v$latest** is available on GitHub.
 Current README example references **$current**.

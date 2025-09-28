@@ -18,4 +18,4 @@ jobs:
       - name: Run ShellCheck
         run: shellcheck update_crs_inplace.sh
       - name: Check shell formatting
-        run: shfmt -d update_crs_inplace.sh
+        run: shfmt -i 2 -ci -bn -sr -d update_crs_inplace.sh

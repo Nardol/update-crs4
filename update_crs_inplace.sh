@@ -43,7 +43,7 @@ errexit() {
 }
 
 usage() {
-  cat <<'USAGE'
+  cat << 'USAGE'
 Usage: update_crs_inplace.sh [options]
 
 Options:
@@ -78,7 +78,7 @@ USAGE
 }
 
 require_cmd() {
-  command -v "$1" >/dev/null 2>&1 || errexit "Commande requise manquante: $1"
+  command -v "$1" > /dev/null 2>&1 || errexit "Commande requise manquante: $1"
 }
 
 fetch_latest_version() {
@@ -92,36 +92,78 @@ fetch_latest_version() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -v|--version)
-        VERSION="${2:-}"; [[ -n "$VERSION" ]] || errexit "--version nécessite une valeur"; shift 2 ;;
-      -l|--latest)
-        LATEST=1; shift ;;
-      -b|--base-dir)
-        BASE_DIR="${2:-}"; [[ -n "$BASE_DIR" ]] || errexit "--base-dir nécessite une valeur"; shift 2 ;;
-      -p|--preserve)
-        local rel="${2:-}"; [[ -n "$rel" ]] || errexit "--preserve nécessite un chemin"; PRESERVE+=("$rel"); shift 2 ;;
+      -v | --version)
+        VERSION="${2:-}"
+        [[ -n "$VERSION" ]] || errexit "--version nécessite une valeur"
+        shift 2
+        ;;
+      -l | --latest)
+        LATEST=1
+        shift
+        ;;
+      -b | --base-dir)
+        BASE_DIR="${2:-}"
+        [[ -n "$BASE_DIR" ]] || errexit "--base-dir nécessite une valeur"
+        shift 2
+        ;;
+      -p | --preserve)
+        local rel="${2:-}"
+        [[ -n "$rel" ]] || errexit "--preserve nécessite un chemin"
+        PRESERVE+=("$rel")
+        shift 2
+        ;;
       --preserve-glob)
-        local glob="${2:-}"; [[ -n "$glob" ]] || errexit "--preserve-glob nécessite un motif"; PRESERVE_GLOBS+=("$glob"); shift 2 ;;
-      -B|--backup-root)
-        BACKUP_ROOT="${2:-}"; [[ -n "$BACKUP_ROOT" ]] || errexit "--backup-root nécessite un chemin"; shift 2 ;;
+        local glob="${2:-}"
+        [[ -n "$glob" ]] || errexit "--preserve-glob nécessite un motif"
+        PRESERVE_GLOBS+=("$glob")
+        shift 2
+        ;;
+      -B | --backup-root)
+        BACKUP_ROOT="${2:-}"
+        [[ -n "$BACKUP_ROOT" ]] || errexit "--backup-root nécessite un chemin"
+        shift 2
+        ;;
       --keep-backups)
-        local keep="${2:-}"; [[ -n "$keep" ]] || errexit "--keep-backups nécessite une valeur"; [[ "$keep" =~ ^[0-9]+$ ]] || errexit "--keep-backups attend un entier"; KEEP_BACKUPS="$keep"; shift 2 ;;
-      -s|--skip-verify)
-        SKIP_VERIFY=1; shift ;;
-      -t|--no-test)
-        NO_TEST=1; shift ;;
-      -q|--quiet)
-        QUIET=1; shift ;;
+        local keep="${2:-}"
+        [[ -n "$keep" ]] || errexit "--keep-backups nécessite une valeur"
+        [[ "$keep" =~ ^[0-9]+$ ]] || errexit "--keep-backups attend un entier"
+        KEEP_BACKUPS="$keep"
+        shift 2
+        ;;
+      -s | --skip-verify)
+        SKIP_VERIFY=1
+        shift
+        ;;
+      -t | --no-test)
+        NO_TEST=1
+        shift
+        ;;
+      -q | --quiet)
+        QUIET=1
+        shift
+        ;;
       --asset-suffix)
-        [[ $# -ge 2 ]] || errexit "--asset-suffix nécessite une valeur (utilisez \"\" pour vide)"; ASSET_SUFFIX="$2"; shift 2 ;;
+        [[ $# -ge 2 ]] || errexit "--asset-suffix nécessite une valeur (utilisez \"\" pour vide)"
+        ASSET_SUFFIX="$2"
+        shift 2
+        ;;
       --cache-dir)
-        CACHE_DIR="${2:-}"; [[ -n "$CACHE_DIR" ]] || errexit "--cache-dir nécessite un chemin"; shift 2 ;;
+        CACHE_DIR="${2:-}"
+        [[ -n "$CACHE_DIR" ]] || errexit "--cache-dir nécessite un chemin"
+        shift 2
+        ;;
       --reload-nginx)
-        RELOAD_NGINX=1; shift ;;
-      -h|--help)
-        usage; exit 0 ;;
+        RELOAD_NGINX=1
+        shift
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
       *)
-        usage; errexit "Option inconnue: $1" ;;
+        usage
+        errexit "Option inconnue: $1"
+        ;;
     esac
   done
 }
@@ -186,7 +228,7 @@ discover_plugin_preserve() {
     local name
     name="$(basename "$path")"
     case "$name" in
-      empty-*.conf|README.md)
+      empty-*.conf | README.md)
         continue
         ;;
     esac
@@ -277,7 +319,8 @@ fetch_tarball_with_fallback() {
 }
 
 save_preserve_files() {
-  local tmp_preserve="$1"; mkdir -p "$tmp_preserve"
+  local tmp_preserve="$1"
+  mkdir -p "$tmp_preserve"
   local rel
   for rel in "${PRESERVE[@]}"; do
     local src="$BASE_DIR/$rel"
@@ -330,7 +373,7 @@ run_nginx_test() {
     log "nginx -t non exécuté (--no-test)"
     return
   fi
-  if command -v nginx >/dev/null 2>&1; then
+  if command -v nginx > /dev/null 2>&1; then
     log "Exécution de nginx -t"
     if ! nginx -t; then
       errexit "nginx -t a échoué"
@@ -347,7 +390,7 @@ reload_nginx() {
 
   log "Reload nginx (--reload-nginx)"
 
-  if command -v systemctl >/dev/null 2>&1; then
+  if command -v systemctl > /dev/null 2>&1; then
     if systemctl reload nginx; then
       log "systemctl reload nginx OK"
       return
@@ -355,7 +398,7 @@ reload_nginx() {
     log "systemctl reload nginx a échoué, tentative nginx -s reload"
   fi
 
-  if command -v nginx >/dev/null 2>&1; then
+  if command -v nginx > /dev/null 2>&1; then
     if nginx -s reload; then
       log "nginx -s reload OK"
       return

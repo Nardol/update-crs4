@@ -38,5 +38,8 @@ Notes
 - Les fichiers plugins spécifiques détectés sont ajoutés automatiquement à la
   liste de préservation, tout comme les motifs fournis via `--preserve-glob`.
 - Le cache des archives se situe par défaut dans `${TMPDIR:-/tmp}/coreruleset-cache`.
+- Workflows CI/CD disponibles : lint (ShellCheck + shfmt), release packaging sur
+  tag `v*`, et vérification hebdomadaire des nouvelles versions CRS (ouvre une
+  issue si besoin).
 - `--reload-nginx` force un reload via `systemctl` ou `nginx -s reload` après
   la validation `nginx -t`.

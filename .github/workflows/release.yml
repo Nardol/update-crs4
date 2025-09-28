@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Ensure lint passes
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt
+          shellcheck update_crs_inplace.sh
+          shfmt -d update_crs_inplace.sh
+      - name: Package artifacts
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          cp update_crs_inplace.sh update_crs_inplace.sh
+          chmod +x update_crs_inplace.sh
+          tar -czf "update-crs4-${VERSION}.tar.gz" update_crs_inplace.sh README.md LICENSE
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            update_crs_inplace.sh
+            update-crs4-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true

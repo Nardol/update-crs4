@@ -9,7 +9,7 @@ on:
         default: 'false'
   push:
     paths:
-      - '.github/workflows/check-crs.yml'
+      - '.github/workflows/crs-update.yml'
   schedule:
     - cron: '0 6 * * 1'
 

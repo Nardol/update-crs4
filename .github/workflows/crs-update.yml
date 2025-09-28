@@ -42,7 +42,16 @@ jobs:
           current=$(grep -oE 'update_crs_inplace.sh --version [0-9]+\.[0-9]+\.[0-9]+' README.md | head -n1 | awk '{print $3}' || true)
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
           echo "current=$current" >> "$GITHUB_OUTPUT"
-          force="${{ github.event.inputs.force_issue }}"
+          force=$(python3 - <<'PY'
+import json
+import os
+
+with open(os.environ['GITHUB_EVENT_PATH']) as fh:
+    event = json.load(fh)
+
+print(event.get('inputs', {}).get('force_issue', 'false'))
+PY
+)
           if [[ -z "$current" ]]; then
             echo "needs_issue=true" >> "$GITHUB_OUTPUT"
           elif [[ "$latest" != "$current" ]]; then

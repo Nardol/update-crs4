@@ -51,7 +51,7 @@ sudo update_crs_inplace.sh --latest
 ```
 Update to a specific version:
 ```bash
-sudo update_crs_inplace.sh --version 4.16.0 --keep-backups 10
+sudo update_crs_inplace.sh --version 4.18.0 --keep-backups 10
 ```
 
 Key features in detail

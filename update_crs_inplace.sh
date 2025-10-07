@@ -7,6 +7,7 @@ BASE_DIR="/etc/modsecurity/crs4"
 SKIP_VERIFY=0
 NO_TEST=0
 QUIET=0
+FORCE=0
 PRESERVE=()
 BACKUP_ROOT=""
 PRESERVE_GLOBS=()
@@ -16,6 +17,7 @@ CACHE_DIR="${TMPDIR:-/tmp}/coreruleset-cache"
 USED_ASSET=""
 TMP_DIR_CLEANUP=""
 RELOAD_NGINX=0
+INSTALLED_VERSION=""
 
 contains_preserve() {
   local needle="$1" item
@@ -61,6 +63,7 @@ Options:
       --asset-suffix <s> Suffixe d'archive (défaut: -minimal). Exemple : --asset-suffix ""
       --cache-dir <dir>  Répertoire cache des archives (défaut: ${TMPDIR:-/tmp}/coreruleset-cache)
       --reload-nginx     Exécute un reload nginx (systemctl ou nginx -s reload) après mise à jour
+  -f, --force            Force la mise à jour même si la version détectée correspond déjà
   -h, --help             Affiche cette aide
 
 Le script :
@@ -156,6 +159,10 @@ parse_args() {
         RELOAD_NGINX=1
         shift
         ;;
+      -f | --force)
+        FORCE=1
+        shift
+        ;;
       -h | --help)
         usage
         exit 0
@@ -166,6 +173,48 @@ parse_args() {
         ;;
     esac
   done
+}
+
+detect_installed_version() {
+  local -a candidates=(
+    "crs-setup.conf.example"
+    "rules/REQUEST-901-INITIALIZATION.conf"
+  )
+  local rel path line version
+
+  for rel in "${candidates[@]}"; do
+    path="$BASE_DIR/$rel"
+    [[ -f "$path" ]] || continue
+    line="$(grep -m1 -E '# OWASP CRS ver\.[0-9.]+' "$path" 2> /dev/null || true)"
+    if [[ -n "$line" ]]; then
+      version="${line##*ver.}"
+      version="${version%%[^0-9.]*}"
+      if [[ -n "$version" ]]; then
+        printf '%s\n' "$version"
+        return 0
+      fi
+    fi
+  done
+
+  if [[ -d "$BASE_DIR/rules" ]]; then
+    while IFS= read -r -d '' path; do
+      rel="${path#"$BASE_DIR"/}"
+      if contains_preserve "$rel"; then
+        continue
+      fi
+      line="$(grep -m1 -E '# OWASP CRS ver\.[0-9.]+' "$path" 2> /dev/null || true)"
+      if [[ -n "$line" ]]; then
+        version="${line##*ver.}"
+        version="${version%%[^0-9.]*}"
+        if [[ -n "$version" ]]; then
+          printf '%s\n' "$version"
+          return 0
+        fi
+      fi
+    done < <(find "$BASE_DIR/rules" -type f -name '*.conf' -print0 2> /dev/null)
+  fi
+
+  return 1
 }
 
 archive_backup() {
@@ -420,6 +469,20 @@ main() {
   [[ -n "$VERSION" ]] || errexit "Spécifiez --version ou --latest"
 
   prepare_preserve_list
+
+  if INSTALLED_VERSION="$(detect_installed_version)"; then
+    log "Version CRS détectée: $INSTALLED_VERSION"
+    if [[ $FORCE -eq 0 && "$INSTALLED_VERSION" == "$VERSION" ]]; then
+      log "CRS ${VERSION} déjà installée. Utilisez --force pour forcer la mise à jour."
+      exit 0
+    fi
+    if [[ $FORCE -eq 1 && "$INSTALLED_VERSION" == "$VERSION" ]]; then
+      log "Version identique détectée (${VERSION}) mais mise à jour forcée (--force)."
+    fi
+  else
+    INSTALLED_VERSION=""
+    log "Impossible de détecter la version CRS installée (aucun motif « # OWASP CRS ver.X » trouvé)."
+  fi
 
   require_cmd curl
   require_cmd tar

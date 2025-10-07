@@ -17,6 +17,8 @@ Ce qui est fait
    détectés dans `plugins/`).
 3. README mis à jour pour documenter l’usage, le fonctionnement de l’archive
    minimale et la suppression des fichiers obsolètes.
+4. Le script détecte maintenant la version CRS installée et ignore les mises à jour
+   redondantes, avec la possibilité de forcer l’exécution via `--force`.
 
 À faire (lorsque tu reprendras)
 -------------------------------

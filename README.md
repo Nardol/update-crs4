@@ -16,6 +16,7 @@ Why this tool?
   files, custom plugins, and user-defined glob patterns.
 - **Minimal archive first** – prefers the official `coreruleset-<version>-minimal.tar.gz`
   asset but falls back to the full bundle when needed.
+- **Idempotent runs** – detects the installed CRS version and skips redundant updates (use `--force` to override).
 - **Practical automation** – optional cache, backup retention, and Nginx reload flag.
 
 Quick start (server side)
@@ -83,6 +84,7 @@ Options
 | `--asset-suffix <suffix>` | Override the archive suffix (default `-minimal`; pass empty string for full bundle only). |
 | `--cache-dir <dir>` | Override the download cache directory. |
 | `--reload-nginx` | Reload Nginx after a successful update (`systemctl reload` → `nginx -s reload`). |
+| `-f, --force` | Force the update even when the detected CRS version already matches the target. |
 
 Best practices
 --------------
